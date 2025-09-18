@@ -1,42 +1,44 @@
 // netlify/functions/getWeather.js
-
 const axios = require('axios');
 
 exports.handler = async function(event, context) {
-  // --- 在这里填入你的和风天气 API Key ---
-  const HEFENG_API_KEY = '4ed6e1878bcb4b2a91d27544d2f7120b'; 
-  // -----------------------------------------
+  // --- 在这里填入你的 OpenWeatherMap API Key ---
+  const OPENWEATHER_API_KEY = '5949beaccf30cf362bd2605890d800f6'; // <--- 替换成你的 Key
+  // ---------------------------------------------
 
-   const { location = '101010100' } = event.queryStringParameters;
-  const url = `https://devapi.qweather.com/v7/weather/now?location=${location}&key=${HEFENG_API_KEY}`;
+  // OpenWeatherMap 使用城市名或经纬度查询，这里以北京为例
+  const city = event.queryStringParameters.city || 'Beijing';
+
+  // OpenWeatherMap API 的 URL (注意域名已经变了)
+  const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${OPENWEATHER_API_KEY}&units=metric&lang=zh_cn`;
   
-  // 增加日志：打印将要请求的 URL
-  console.log("Requesting URL:", url);
+  console.log("Requesting OpenWeatherMap URL:", url);
 
   try {
     const response = await axios.get(url);
+    console.log("Successfully fetched data from OpenWeatherMap:", response.data);
     
-    // 增加日志：打印成功获取的数据
-    console.log("Successfully fetched data:", response.data);
-    
+    // 返回一个我们自己整理的、更简洁的数据结构给小程序
+    const weatherData = {
+      now: {
+        temp: response.data.main.temp,
+        feelsLike: response.data.main.feels_like,
+        text: response.data.weather[0].description,
+        windDir: response.data.wind.deg, // 风向角度
+        windScale: response.data.wind.speed // 风速 (米/秒)
+      },
+      updateTime: new Date(response.data.dt * 1000).toISOString() // 转换时间戳
+    };
+
     return {
       statusCode: 200,
-      body: JSON.stringify(response.data)
+      body: JSON.stringify(weatherData) // 返回整理后的数据
     };
   } catch (error) {
-    //打印详细的错误对象
-    console.error("An error occurred:", error);
-    
-    // 返回更详细的错误信息给前端，方便调试
+    console.error("An error occurred with OpenWeatherMap:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ 
-        message: '获取天气数据失败',
-        // 将 axios 的错误信息也包含进去
-        error_details: error.message, 
-        // 如果是 axios 的网络错误，还会有 config 和 code 等信息
-        axios_error_code: error.code 
-      })
+      body: JSON.stringify({ message: '获取天气数据失败', error_details: error.message })
     };
   }
 };
