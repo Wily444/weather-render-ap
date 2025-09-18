@@ -4,7 +4,7 @@ const axios = require('axios');
 
 exports.handler = async function(event, context) {
   // --- 在这里填入你的和风天气 API Key ---
-  const HEFENG_API_KEY = '4ed6e1878bcb4b2a91d27544d2f7120b'; // <--- 把它替换成你自己的 Key
+  const HEFENG_API_KEY = '4ed6e1878bcb4b2a91d27544d2f7120b'; 
   // -----------------------------------------
 
   const { location = '101010100' } = event.queryStringParameters;
