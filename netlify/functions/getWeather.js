@@ -3,7 +3,7 @@ const axios = require('axios');
 
 exports.handler = async function(event, context) {
   // --- 在这里填入你的 OpenWeatherMap API Key ---
-  const OPENWEATHER_API_KEY = '5949beaccf30cf362bd2605890d800f6'; // <--- 替换成你的 Key
+  const OPENWEATHER_API_KEY = '3be32aaba43c81f3380a99bc5d393a4c'; // <--- 替换成你的 Key
   // ---------------------------------------------
 
   // OpenWeatherMap 使用城市名或经纬度查询，这里以北京为例
