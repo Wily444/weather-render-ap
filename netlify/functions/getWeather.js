@@ -2,7 +2,7 @@
 const axios = require('axios');
 
 exports.handler = async function(event, context) {
-  const API_HOST = 'p52tunm8wb.re.qweatherapi.com'; // 替换成您能用的 apihost
+  const API_HOST = 'p52tunm8wb.re.qweatherapi.com'; 
   const HEFENG_API_KEY = 'ef83c03ab480444187e74628aa4282ba';
 
   const params = event.queryStringParameters || {};
@@ -17,7 +17,7 @@ exports.handler = async function(event, context) {
   const warningUrl = `https://${API_HOST}/v7/warning/now?location=${location}&key=${HEFENG_API_KEY}`;
 
   //
-  // --- 这是最关键的修正：伪造一个浏览器 User-Agent 请求头 ---
+  // --- 伪造浏览器 User-Agent 请求头 ---
   //
   const requestOptions = {
     headers: {
@@ -28,7 +28,7 @@ exports.handler = async function(event, context) {
   try {
     console.log("并行请求和风天气API (使用伪造请求头)...");
     
-    // 在请求时，传入我们伪造的请求头
+    // 在请求时，传入伪造的请求头
     const [forecastRes, warningRes] = await Promise.all([
       axios.get(forecastUrl, requestOptions),
       axios.get(warningUrl, requestOptions)
@@ -54,7 +54,6 @@ exports.handler = async function(event, context) {
 
   } catch (error) {
     console.error("请求和风天气API时发生异常:", error);
-    // 返回更详细的错误给小程序端，方便调试
     return {
       statusCode: 500,
       body: JSON.stringify({ 
