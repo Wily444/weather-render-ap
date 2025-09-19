@@ -10,8 +10,12 @@ exports.handler = async function(event, context) {
 
   const params = event.queryStringParameters || {};
   const { lat, lon } = params;
+
   if (!lat || !lon) {
-    return { statusCode: 400, body: JSON.stringify({ message: '缺少经纬度参数' }) };
+    return { 
+      statusCode: 400, 
+      body: JSON.stringify({ message: '请求中缺少经纬度参数 (lat and lon)' }) 
+    };
   }
 
   // --- 准备两个服务商的 API 地址 ---
@@ -20,11 +24,11 @@ exports.handler = async function(event, context) {
 
   // 2. 和风天气 (补充数据源)
   const hefengLocation = `${lon},${lat}`;
-  const hefengWarningUrl = `https://` + HEFENG_API_HOST + `/v7/warning/now?location=${hefengLocation}&key=${HEFENG_API_KEY}`;
-  const hefengGeoUrl = `https://` + HEFENG_API_HOST + `/v2/city/lookup?location=${hefengLocation}&key=${HEFENG_API_KEY}`; // 用于反查城市名
+  const hefengWarningUrl = `https://${HEFENG_API_HOST}/v7/warning/now?location=${hefengLocation}&key=${HEFENG_API_KEY}`;
+  const hefengGeoUrl = `https://${HEFENG_API_HOST}/v2/city/lookup?location=${hefengLocation}&key=${HEFENG_API_KEY}`; // 用于反查城市名
 
   const hefengRequestOptions = {
-    headers: { 'User-Agent': 'Mozilla/5.0 ...' } // 保持伪造的 User-Agent
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' }
   };
 
   try {
@@ -39,12 +43,12 @@ exports.handler = async function(event, context) {
     // 1. 以 OpenWeatherMap 的数据为基础
     const rawOwData = owRes.data;
     
-    // 2. 提取和风天气的数据
+    // 2. 提取和风天气的数据 (如果请求成功)
     const warnings = hfWarningRes.data.code === '200' ? hfWarningRes.data.warning : [];
     const cityInfo = hfGeoRes.data.code === '200' ? hfGeoRes.data.location[0] : null;
 
     // 3. 开始“翻译”和“组装”
-    // "当前天气"
+    // "当前天气" (从 OpenWeatherMap 的第一条预报模拟)
     const current = {
       temp: rawOwData.list[0].main.temp,
       feels_like: rawOwData.list[0].main.feels_like,
@@ -53,10 +57,10 @@ exports.handler = async function(event, context) {
       wind: rawOwData.list[0].wind
     };
 
-    // "逐小时预报"
+    // "逐小时预报" (从 OpenWeatherMap 的预报列表提取)
     const hourly = rawOwData.list.slice(0, 8);
 
-    // "未来几天预报"
+    // "未来几天预报" (从 OpenWeatherMap 的预报列表聚合)
     const dailyForecast = {};
     rawOwData.list.forEach(item => {
         const date = item.dt_txt.split(' ')[0];
@@ -86,10 +90,16 @@ exports.handler = async function(event, context) {
       warning: warnings // 加入天气预警
     };
 
-    return { statusCode: 200, body: JSON.stringify(finalData) };
+    return { 
+      statusCode: 200, 
+      body: JSON.stringify(finalData) 
+    };
 
   } catch (error) {
-    console.error("请求混合API时发生异常:", error);
-    return { statusCode: 500, body: JSON.stringify({ message: '获取天气数据失败' }) };
+    console.error("请求混合API时发生异常:", error.response ? error.response.data : error.message);
+    return { 
+      statusCode: 500, 
+      body: JSON.stringify({ message: '获取天气数据失败' }) 
+    };
   }
 };
