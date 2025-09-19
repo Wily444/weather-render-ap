@@ -2,45 +2,49 @@
 const axios = require('axios');
 
 exports.handler = async function(event, context) {
-  // --- 和风天气 API Key ---
-  const HEFENG_API_KEY = 'ef83c03ab480444187e74628aa4282ba'; // 
-  // -----------------------------------------
+  const API_HOST = 'p52tunm8wb.re.qweatherapi.com'; // 替换成您能用的 apihost
+  const HEFENG_API_KEY = 'ef83c03ab480444187e74628aa4282ba';
 
-  const { lat, lon } = event.queryStringParameters;
+  const params = event.queryStringParameters || {};
+  const { lat, lon } = params;
+
   if (!lat || !lon) {
-    return { statusCode: 400, body: JSON.stringify({ message: '缺少经纬度参数' }) };
+    return { statusCode: 400, body: JSON.stringify({ message: '请求中缺少经纬度参数' }) };
   }
 
-  // 将经纬度格式化成和风天气需要的 'lon,lat' 格式
   const location = `${lon},${lat}`;
+  const forecastUrl = `https://${API_HOST}/v7/weather/7d?location=${location}&key=${HEFENG_API_KEY}`;
+  const warningUrl = `https://${API_HOST}/v7/warning/now?location=${location}&key=${HEFENG_API_KEY}`;
 
-  // --- 准备两个 API 的请求地址 ---
-  // 1. 获取未来7天天气预报的 API
-  const forecastUrl = `https://p52tunm8wb.re.qweatherapi.com/v7/weather/7d?location=${location}&key=${HEFENG_API_KEY}`;
-  // 2. 获取天气灾害预警的 API
-  const warningUrl = `https://p52tunm8wb.re.qweatherapi.com/v7/warning/now?location=${location}&key=${HEFENG_API_KEY}`;
+  //
+  // --- 这是最关键的修正：伪造一个浏览器 User-Agent 请求头 ---
+  //
+  const requestOptions = {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'
+    }
+  };
 
   try {
-    // --- 使用 Promise.all 并行发起两个请求，提升效率 ---
-    console.log("并行请求和风天气API...");
+    console.log("并行请求和风天气API (使用伪造请求头)...");
+    
+    // 在请求时，传入我们伪造的请求头
     const [forecastRes, warningRes] = await Promise.all([
-      axios.get(forecastUrl),
-      axios.get(warningUrl)
+      axios.get(forecastUrl, requestOptions),
+      axios.get(warningUrl, requestOptions)
     ]);
     
-    // --- 检查两个请求是否都成功 ---
     if (forecastRes.data.code !== '200' || warningRes.data.code !== '200') {
-      console.error("和风天气API返回错误:", { forecast: forecastRes.data, warning: warningRes.data });
-      throw new Error('和风天气API业务错误');
+      console.error("和风天气API返回业务错误:", { forecast: forecastRes.data, warning: warningRes.data });
+      throw new Error(`和风天气API业务错误: ${forecastRes.data.code}, ${warningRes.data.code}`);
     }
     
     console.log("成功获取所有数据。");
 
-    // --- 组合最终返回给小程序的数据 ---
     const finalData = {
-      daily: forecastRes.data.daily,       // 未来7天预报
-      warning: warningRes.data.warning,    // 天气预警 (可能是一个空数组)
-      updateTime: forecastRes.data.updateTime // 更新时间
+      daily: forecastRes.data.daily,
+      warning: warningRes.data.warning,
+      updateTime: forecastRes.data.updateTime
     };
 
     return {
@@ -50,9 +54,13 @@ exports.handler = async function(event, context) {
 
   } catch (error) {
     console.error("请求和风天气API时发生异常:", error);
+    // 返回更详细的错误给小程序端，方便调试
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: '获取天气数据失败', error_details: error.message })
+      body: JSON.stringify({ 
+          message: '获取天气数据失败', 
+          error_details: error.response ? error.response.data : error.message 
+      })
     };
   }
 };
