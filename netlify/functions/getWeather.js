@@ -1,3 +1,10 @@
+// netlify/functions/getWeather.js
+const axios = require('axios');
+
+exports.handler = async function(event, context) {
+  const API_HOST = 'p52tunm8wb.re.qweatherapi.com';
+  const HEFENG_API_KEY = 'ef83c03ab480444187e74628aa4282ba';
+
   const params = event.queryStringParameters || {};
   const { lat, lon } = params;
 
