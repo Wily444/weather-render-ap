@@ -16,9 +16,9 @@ exports.handler = async function(event, context) {
 
   // --- 准备两个 API 的请求地址 ---
   // 1. 获取未来7天天气预报的 API
-  const forecastUrl = `https://devapi.qweather.com/v7/weather/7d?location=${location}&key=${HEFENG_API_KEY}`;
+  const forecastUrl = `https://p52tunm8wb.re.qweatherapi.com/v7/weather/7d?location=${location}&key=${HEFENG_API_KEY}`;
   // 2. 获取天气灾害预警的 API
-  const warningUrl = `https://devapi.qweather.com/v7/warning/now?location=${location}&key=${HEFENG_API_KEY}`;
+  const warningUrl = `https://p52tunm8wb.re.qweatherapi.com/v7/warning/now?location=${location}&key=${HEFENG_API_KEY}`;
 
   try {
     // --- 使用 Promise.all 并行发起两个请求，提升效率 ---
