@@ -3,7 +3,7 @@ const axios = require('axios');
 
 exports.handler = async function(event, context) {
   const OPENWEATHER_API_KEY = '3be32aaba43c81f3380a99bc5d393a4c';
-  const HEFENG_API_HOST = = 'p52tunm8wb.re.qweatherapi.com';
+  const HEFENG_API_HOST = 'p52tunm8wb.re.qweatherapi.com';
   const HEFENG_API_KEY = 'ef83c03ab480444187e74628aa4282ba';
 
   // ---------------------------------------------
